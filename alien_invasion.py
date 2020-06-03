@@ -1,56 +1,48 @@
-import sys
-
 import pygame
-
 from settings import Settings
 from ship import Ship
+import game_functions as gf
+from pygame.sprite import Group
+from alien import Alien
+from game_stats import GameStats
+from button import Button
 
-class AlienInvasion:
-    """Overall class to manage game assets and behaviour"""
-
-    def __init__(self):
-        """Initialize the game, and create game resources."""
-        pygame.init()
-        self.settings = Settings()
-
-        self.screen = pygame.display.set_mode(
-            (self.settings.screen_width, self.settings.screen_height)
-        )
-
-        self.screen = pygame.display.set_mode((800,600))
-        pygame.display.set_caption("Alien Invasion")
-
-        self.ship = Ship(self)
-
-        # Set the background color.
-        self.bg_color = (230, 230, 230)
-
-    def run_game(self):
-        """Start the main loop for the game"""
-        while True:
-            self._check_events()
-     
-    def _check_events(self):
-        """Respond the screen during each pass through the loop."""
-        # Watch for keyboard and mouse events.
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                sys.exit()
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RIGHT:
-                    # Move the ship to the right. 
-                    self.ship.rect.x += 1
-
-    def _update_screen(self):
-        """Update images on the screen, and flip to the new screen."""
-        # Redraw the screen during each pass through the loop.
-        self.screen.fill(self.settings.bg_color)
-        self.ship.blitme()
-
-        # Make the most recently drawn screen visible.
-        pygame.display.flip()
-
-if __name__ == '__main__':
-    # Make a game instance, and run the game.
-    ai = AlienInvasion()
-    ai.run_game()
+def run_game():
+	# Initialize game and create a screen object
+	pygame.init()
+	ai_settings = Settings()
+	
+	screen = pygame.display.set_mode((ai_settings.screen_width, ai_settings.screen_height))
+	
+	pygame.display.set_caption("Alien Invasion")
+	
+	# Make the Play button.
+	play_button = Button(ai_settings, screen, "Play")
+	
+	# Create an instance to store game statistics.
+	stats = GameStats(ai_settings)
+	
+	# Make a ship
+	ship = Ship(ai_settings, screen)
+	
+	# Make a group to store bullets in.
+	bullets = Group()
+	
+	# Make a group of aliens.
+	aliens = Group()
+	
+	# Create the fleet of aliens.
+	gf.create_fleet(ai_settings, screen, ship, aliens)
+	
+	# Start the main loop for the game
+	while True:
+		# Watch for the keyboard and mouse events
+		gf.check_events(ai_settings, screen, stats, play_button, ship, bullets)
+		if stats.game_active:
+			ship.update()
+			gf.update_bullets(ai_settings, screen, ship, aliens, bullets)
+			gf.update_aliens(ai_settings, stats, screen, ship, aliens, bullets)
+		
+		gf.update_screen(ai_settings, screen, stats, ship, aliens, bullets, play_button)
+	
+run_game()
